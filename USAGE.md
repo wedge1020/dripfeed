@@ -1,7 +1,7 @@
 # Using dripfeed
 
-Practical recipes for everyday jobs. *This  file is meant to grow — add
-cases as you meet them.* For every option, run `dripfeed --help`.
+Practical recipes for everyday jobs. *This file is meant to grow — add cases as
+you meet them.* For every option, run `dripfeed --help`.
 
 Contents
 1. [Before you start](#1-before-you-start)
@@ -15,31 +15,29 @@ Contents
 9. [Verbose output and troubleshooting](#9-verbose-output-and-troubleshooting)
 10. [Scripting and the Raspberry Pi](#10-scripting-and-the-raspberry-pi)
 11. [Exit codes](#11-exit-codes)
-12. [To be expanded](#12-to-be-expanded)
+12. [Fanuc Macro B programs (Star Swiss, 30i/31i/32i, 16i/18i)](#12-fanuc-macro-b-programs-star-swiss-30i31i32i-16i18i)
+13. [To be expanded](#13-to-be-expanded)
 
 ---
 
 ## 1. Before you start
 
-1. **Cable  and  levels.**   A  Pi's  own  UART  is  3.3   V  logic,  not
-   RS-232.  Use a  USB-RS232  adapter  or a  MAX3232  level shifter.  See
+1. **Cable and levels.** A Pi's own UART is 3.3 V logic, not RS-232. Use a
+   USB-RS232 adapter or a MAX3232 level shifter. See
    [docs/WIRING.md](docs/WIRING.md).
-
 2. **Permissions.** `sudo usermod -aG dialout $USER`, then log in again.
-
-3. **Match the  control.** Baud,  data bits, parity,  stop bits  and flow
-   control  must be  the same  on both  ends. Pick  the nearest  built-in
-   profile (`--list-profiles`),  then check it against  the control's own
-   parameters ([docs/PROFILES.md](docs/PROFILES.md)).
-
+3. **Match the control.** Baud, data bits, parity, stop bits and flow control
+   must be the same on both ends. Pick the nearest built-in profile
+   (`--list-profiles`), then check it against the control's own parameters
+   ([docs/PROFILES.md](docs/PROFILES.md)).
 4. **Put the control in its receive / DNC mode** before starting the feed
    (the name varies — check the manual).
 
 ## 2. Rehearse with a dry run
 
-`-n` /  `--dry-run` never opens the  serial port. It validates  the file,
-prints every block  that *would* be sent (to stdout),  and shows size and
-time estimates (to stderr). No device is needed.
+`-n` / `--dry-run` never opens the serial port. It validates the file, prints
+every block that *would* be sent (to stdout), and shows size and time estimates
+(to stderr). No device is needed.
 
 ```sh
 dripfeed -n -p fanuc-0i part.nc
@@ -56,8 +54,8 @@ Example output:
 [dry-run] (added)     -> "%" <LF>
 ```
 
-Use it to check line endings,  `%` framing, comment handling, and whether
-any line is rejected — *before* you're standing at the machine.
+Use it to check line endings, `%` framing, comment handling, and whether any
+line is rejected — *before* you're standing at the machine.
 
 ## 3. Send a program
 
@@ -65,9 +63,8 @@ any line is rejected — *before* you're standing at the machine.
 dripfeed -p haas -d /dev/ttyUSB0 part.nc
 ```
 
-You  will  see  a  summary   (file,  blocks,  profile,  serial  settings,
-estimate), then a  progress line. The device can also  come from a config
-file (`device =`).
+You will see a summary (file, blocks, profile, serial settings, estimate), then
+a progress line. The device can also come from a config file (`device =`).
 
 Notes on what dripfeed does to each line:
 
@@ -78,9 +75,9 @@ Notes on what dripfeed does to each line:
 - **refuses** (before sending anything) lines with non-ASCII bytes, an
   unterminated `(` comment, or blocks longer than the profile's limit
 
-> `;` is treated as a comment start only when comment stripping is on. On
-> some controls  (e.g. Fanuc) `;`  is the end-of-block character,  so the
-> Fanuc profiles leave comment stripping **off**.
+> `;` is treated as a comment start only when comment stripping is on. On some
+> controls (e.g. Fanuc) `;` is the end-of-block character, so the Fanuc
+> profiles leave comment stripping **off**.
 
 ## 4. Pause, resume, abort — and resume after a stop
 
@@ -90,11 +87,10 @@ Notes on what dripfeed does to each line:
 | Resume | `p` or space | `kill -USR2 <pid>` |
 | Abort | `q` | `Ctrl-C`, `kill <pid>` |
 
-**Pause stops  new lines only.** The  machine continues with what  it has
+**Pause stops new lines only.** The machine continues with what it has
 buffered. Use the machine's feed hold for an immediate stop.
 
-When a transfer stops (abort,  timeout, machine error) dripfeed tells you
-where:
+When a transfer stops (abort, timeout, machine error) dripfeed tells you where:
 
 ```
 Stopped before confirming line 120. Resume with: --start-line 120
@@ -104,11 +100,10 @@ Stopped before confirming line 120. Resume with: --start-line 120
 dripfeed -p fanuc-0i -d /dev/ttyUSB0 --start-line 120 part.nc
 ```
 
-Resuming  mid-program means  the  control's modal  state (tool,  offsets,
-spindle, feed,  coordinate mode) is  whatever it was —  re-establish it
-first. No leading  `%` is sent on  a resume. If the message  says a block
-"may have been  partially transmitted", reset the program  on the machine
-before resuming.
+Resuming mid-program means the control's modal state (tool, offsets, spindle,
+feed, coordinate mode) is whatever it was — re-establish it first. No leading
+`%` is sent on a resume. If the message says a block "may have been partially
+transmitted", reset the program on the machine before resuming.
 
 ## 5. Adjust a built-in profile from the command line
 
@@ -124,8 +119,7 @@ dripfeed -p haas --show-profile -b 19200                 # check what you'd get
 
 ## 6. Define your own machine in a config file
 
-Config files  are searched in  this order (later wins;  command-line wins
-over all):
+Config files are searched in this order (later wins; command-line wins over all):
 
 1. `/etc/dripfeed.conf`
 2. `~/.config/dripfeed/dripfeed.conf`
@@ -151,10 +145,9 @@ dripfeed -p shop-lathe -b 9600 part.nc
 dripfeed --list-profiles    # shows shop-lathe alongside the built-ins
 ```
 
-Every            setting            is           documented            in
-[docs/dripfeed.conf.example](docs/dripfeed.conf.example).  Mistakes in  a
-config file  are reported with file  and line number; typos  in key names
-are errors, not silently ignored.
+Every setting is documented in [docs/dripfeed.conf.example](docs/dripfeed.conf.example).
+Mistakes in a config file are reported with file and line number; typos in key
+names are errors, not silently ignored.
 
 ## 7. Handshaking: acknowledge bytes and grbl `ok`
 
@@ -170,10 +163,9 @@ dripfeed -p grbl -d /dev/ttyUSB0 part.nc               # wait for "ok"
   transfer with exit code 4 and the line number to resume from.
 - `-T` is how long to wait before giving up (ms).
 
-grbl-style  streaming  is  send-and-wait   (one  line  in  flight).  That
-is  safe  and   simple;  throughput  on  tiny  segments   is  lower  than
-grbl's   character-counting   protocol   would   allow.   (See   [to   be
-expanded](#12-to-be-expanded).)
+grbl-style streaming is send-and-wait (one line in flight). That is safe and
+simple; throughput on tiny segments is lower than grbl's character-counting
+protocol would allow. (See [to be expanded](#12-to-be-expanded).)
 
 ## 8. Slow controls: pacing
 
@@ -204,9 +196,8 @@ dripfeed -vv ...     # plus byte-level debugging
 
 ## 10. Scripting and the Raspberry Pi
 
-dripfeed is  a plain  command, so anything  on the Pi  — a  Python GPIO
-script, a button daemon, a web page — can start it, and control it with
-signals.
+dripfeed is a plain command, so anything on the Pi — a Python GPIO script, a
+button daemon, a web page — can start it, and control it with signals.
 
 ```sh
 # start in the background, remember the pid
@@ -219,9 +210,8 @@ kill -TERM $PID      # e.g. interlock tripped -> abort
 wait $PID; echo "exit status $?"
 ```
 
-For   tighter    integration   (buttons    and   LEDs    handled   inside
-the    program),   see    the    `hw_*`   hooks    in   `src/hw.c`    and
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+For tighter integration (buttons and LEDs handled inside the program), see the
+`hw_*` hooks in `src/hw.c` and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## 11. Exit codes
 
@@ -233,10 +223,52 @@ the    program),   see    the    `hw_*`   hooks    in   `src/hw.c`    and
 | 3 | Aborted by operator (key, signal, hardware input) |
 | 4 | Machine reported an error/alarm line |
 
-"Delivered" means the control has *accepted* every block into its buffer,
-not that the part has finished machining.
+"Delivered" means the control has *accepted* every block into its buffer, not
+that the part has finished machining.
 
-## 12. To be expanded
+## 12. Fanuc Macro B programs (Star Swiss, 30i/31i/32i, 16i/18i)
+
+```sh
+dripfeed -n -p fanuc-30i swiss_part.nc                  # rehearse first
+dripfeed -p fanuc-30i -d /dev/ttyUSB0 swiss_part.nc
+```
+
+**What dripfeed guarantees:** Macro B text is sent exactly as written. Variables
+(`#100=#101+1`), expressions (`[#1 EQ 0]`), `IF/GOTO`, `WHILE/DO/END`, `G65`
+and `M98` calls, `DPRNT[..]`, `/` block skip, `N` labels and any other
+printable-ASCII words (`$1`, `!2` …) are never stripped or reinterpreted. The
+only transformation is optional upper-casing (on in the Fanuc profiles), and
+the Fanuc profiles leave comments in, so `#3006=1 (MESSAGE)` keeps its text.
+`;` is never treated as a comment unless you ask for comment stripping.
+
+**What dripfeed warns about (and never blocks):** a drip-fed program is a
+stream; the control may not be able to look back at, or ahead of, what it has
+received. Before sending, a scan reports:
+
+| Warning | Why it matters |
+|---------|----------------|
+| `GOTO n jumps BACK` | Earlier blocks are gone; likely to alarm when streamed |
+| `GOTO n - no block Nn in this file` | Typo or missing label |
+| computed `GOTO #n` | Target can't be checked in advance |
+| `WHILE` loop(s) | Loops re-read earlier blocks |
+| `program calls: G65 P9001, M98 P1234` | Those programs must **already be in the control's memory** — they can't be fed from here |
+| more than one `O` number in the file | Only the main program streams as the running program |
+| comment stripping would delete `#3006` / `(MSG..)` text | Use `--no-strip-comments` |
+
+Silence them with `--no-macro-check` (or `macro_check = no` in a profile).
+Forward-`GOTO` details appear with `-v`.
+
+How much of this your control actually accepts when streaming depends on the
+model, options and the machine builder's setup — **prove out macro programs
+with the chuck empty**, and consult the Fanuc/Star manuals. Common practical
+patterns are to keep macros and subprograms in control memory and drip-feed
+only the long motion program that calls them, or to use the memory
+card / Data Server instead of RS-232 for programs that need branching.
+
+Note `DPRNT`/`POPEN`/`PCLOS` send text *out* of the control's serial port, i.e.
+back to dripfeed. Replies are read and shown with `-v`, and otherwise ignored.
+
+## 13. To be expanded
 
 Ideas and open items — add recipes here as they are proven:
 

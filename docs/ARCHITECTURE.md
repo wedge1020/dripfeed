@@ -9,6 +9,7 @@ inc/profile.h   profile type, built-in table, field parser    src/profile.c
 inc/config.h    INI config file loader                        src/config.c
 inc/cli.h       getopt_long front end                         src/cli.c
 inc/gcode.h     per-line preparation and validation           src/gcode.c
+inc/macro.h     advisory Fanuc Macro B scan (warnings only)    src/macro.c
 inc/serial.h    termios layer                                 src/serial.c
 inc/control.h   pause/resume/abort (keys, signals, hw)        src/control.c
 inc/hw.h        GPIO/LED hook points (stub)                   src/hw.c
@@ -32,6 +33,10 @@ inc/feeder.h    scan + send engine                            src/feeder.c
 ```
 
 ## Key design decisions
+
+- **Macro B is data, not syntax we interpret.** `macro.c` only *observes* prepared
+  blocks (labels, GOTO, WHILE, G65/M98 calls, O-numbers) and logs cautions; it
+  has no write access to what is sent.
 
 - **One parser for settings.** `profile_set_field()` is used by config files
   *and* command-line options, so a setting means the same everywhere.

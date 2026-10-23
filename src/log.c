@@ -27,6 +27,15 @@ void log_error(const char *fmt, ...)
     va_end(ap);
 }
 
+/* Warnings: something the operator should read, but not fatal. Always shown. */
+void log_warn(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vlog("dripfeed: warning: ", fmt, ap);
+    va_end(ap);
+}
+
 /* Informational messages are always shown (they are few: banner, summary). */
 void log_info(const char *fmt, ...)
 {

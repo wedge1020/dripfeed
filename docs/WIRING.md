@@ -16,6 +16,15 @@ damage the Pi. Choose one:
    and enable them in `config.txt`.
 3. **Isolated RS-232 HAT** — same idea, in one board.
 
+**Latency note:** an 18-M drip-feed article warns that USB-RS232 adapters add
+1-16 ms of latency and can starve a control running many short moves. dripfeed
+wakes just as each block leaves the UART and does not add delays by default
+(keep `-l` and `-t` at 0 for Fanuc), but the adapter's own latency is outside
+its control. For FTDI-based adapters you can lower it:
+`echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer`.
+A native UART through a MAX3232 avoids the issue. This hasn't been
+measured on real hardware here.
+
 Add your user to `dialout`: `sudo usermod -aG dialout $USER` (log in again).
 
 ## Cable

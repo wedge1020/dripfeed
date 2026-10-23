@@ -43,6 +43,8 @@ strip_comments = no           # remove (..) and ;.. comments
 strip_blank    = yes          # don't send empty lines
 uppercase      = yes          # force upper case
 max_line_len   = 0            # refuse blocks longer than this; 0 = no limit
+macro_check    = yes          # warn about Macro B constructs that may not work when
+                              # drip-fed (advisory only; never blocks or changes data)
 
 # --- pacing and handshaking ---
 line_delay_ms  = 0            # pause after every line

@@ -19,6 +19,7 @@
 #include "gcode.h"
 #include "hw.h"
 #include "log.h"
+#include "macro.h"
 #include "serial.h"
 
 /* ---------------------------------------------------------------------------
@@ -65,15 +66,23 @@ int feeder_scan(const feed_job_t *job, feed_scan_t *scan)
     FILE *fp = fopen(job->path, "r");
     if (!fp) { log_error("cannot open %s: %s", job->path, strerror(errno)); return DF_ERROR; }
 
-    char   *buf = NULL;
+    char   *buf = NULL, *raw = NULL;
     size_t  cap = 0;
     ssize_t got;
     long    lineno = 0;
     long    first_sent = 0, last_sent = 0;       /* first/last line sent  */
     int     first_is_pct = 0, last_is_pct = 0;
+    macro_ctx_t macro;
+    macro_init(&macro);
 
     while ((got = getline(&buf, &cap, fp)) != -1) {
         lineno++;
+        /* Keep an untouched copy: gcode_prepare edits in place, and the macro
+         * scan wants to see comment text that stripping removes. */
+        if (p->macro_check) {
+            char *r = realloc(raw, (size_t)got + 1);
+            if (r) { raw = r; memcpy(raw, buf, (size_t)got + 1); }
+        }
         gcode_line_t g;
         gcode_prepare(buf, p, &g);
 
@@ -90,6 +99,8 @@ int feeder_scan(const feed_job_t *job, feed_scan_t *scan)
             scan->problems++;
             continue;
         }
+
+        if (p->macro_check) macro_scan_block(&macro, buf, raw, lineno, p);
 
         if (!first_sent) { first_sent = lineno; first_is_pct = gcode_is_percent(buf, g.len); }
         last_sent = lineno;
@@ -109,7 +120,11 @@ int feeder_scan(const feed_job_t *job, feed_scan_t *scan)
     scan->has_lead_percent  = first_is_pct;
     scan->has_trail_percent = last_is_pct;
     free(buf);
+    free(raw);
     fclose(fp);
+
+    if (p->macro_check) macro_report(&macro, p);
+    macro_free(&macro);
 
     /* Framing lines we will add ourselves count towards the totals. */
     if (p->percent_frame) {
@@ -249,7 +264,7 @@ static int send_block(feeder_t *f, counters_t *c, const char *text, size_t len,
     /* Wait until the bytes have actually left. This is what makes it a
      * "drip": with XOFF asserted by the machine we sit here, one block
      * ahead at most, instead of filling the kernel's 4 KB tty buffer. */
-    if (serial_wait_sent(f->fd) < 0)
+    if (serial_wait_sent(f->fd, 1000000L * profile_bits_per_char(p) / p->baud) < 0)
         return control_abort_requested() ? DF_ABORTED : DF_ERROR;
 
     c->in_flight = 0;

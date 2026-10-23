@@ -35,8 +35,12 @@ int serial_write(int fd, const char *buf, size_t n, long char_delay_us);
 /*
  * Wait until everything written so far has physically left the UART, i.e.
  * until the machine has "accepted" it. Responsive to abort. 0 or -1.
+ *
+ * char_time_us is the time one character takes on the wire; it lets the wait
+ * wake up just as the last byte leaves, so a free-running machine is not left
+ * starved between blocks (matters for programs made of many short moves).
  */
-int serial_wait_sent(int fd);
+int serial_wait_sent(int fd, long char_time_us);
 
 /* Throw away anything queued for transmission (used on abort, so a held-off
  * kernel buffer is not delivered later when the machine sends XON). */

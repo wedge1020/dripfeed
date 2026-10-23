@@ -139,7 +139,7 @@ int serial_write(int fd, const char *buf, size_t n, long char_delay_us)
     return 0;
 }
 
-int serial_wait_sent(int fd)
+int serial_wait_sent(int fd, long char_time_us)
 {
     for (;;) {
         int pending = 0;
@@ -154,7 +154,15 @@ int serial_wait_sent(int fd)
             return tcdrain(fd);
         }
         if (control_abort_requested()) return -1;
-        sleep_us(5000);
+
+        /* Sleep about as long as the queue needs to drain, so we wake right
+         * as it empties (no idle gap on the wire), but never longer than
+         * 5 ms so abort/pause stay responsive while the machine holds us
+         * off with XOFF/CTS (queue not shrinking). */
+        long us = (long)pending * char_time_us;
+        if (us > 5000) us = 5000;
+        if (us < 200)  us = 200;
+        sleep_us(us);
     }
 }
 

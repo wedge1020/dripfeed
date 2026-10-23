@@ -11,6 +11,7 @@ int  log_verbosity(void);
 
 /* printf-style helpers. log_error always prints; the others honour verbosity. */
 void log_error(const char *fmt, ...)   __attribute__((format(printf, 1, 2)));
+void log_warn(const char *fmt, ...)    __attribute__((format(printf, 1, 2)));
 void log_info(const char *fmt, ...)    __attribute__((format(printf, 1, 2)));
 void log_verbose(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void log_debug(const char *fmt, ...)   __attribute__((format(printf, 1, 2)));

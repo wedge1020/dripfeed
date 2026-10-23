@@ -1,44 +1,37 @@
 # dripfeed
 
-A small, dependency-free **G-code drip  feeder** written in C. It streams
-a  G-code program  line by  line over  a serial  (RS-232) link  to a  CNC
-control that can't hold the whole program in memory — and it's built to
-run  on a  **Raspberry  Pi** that  can also  drive  buttons, sensors  and
-indicator LEDs.
+A small, dependency-free **G-code drip feeder** written in C. It streams a
+G-code program line by line over a serial (RS-232) link to a CNC control that
+can't hold the whole program in memory — and it's built to run on a
+**Raspberry Pi** that can also drive buttons, sensors and indicator LEDs.
 
 Current target: a CNC lathe. Designed to grow to other controls.
 
-> **Status:  early (v0.2).**  The engine  is tested  against a  simulated
-> machine  (pseudo-terminal), but  **not yet  proven on  real hardware**.
-> Built-in  controller  settings  are  researched  starting  points,  not
-> guarantees — see  [docs/PROFILES.md](docs/PROFILES.md). Prove out any
-> new setup with the chuck empty and feed override low.
+> **Status: early (v0.2).** The engine is tested against a simulated machine
+> (pseudo-terminal), but **not yet proven on real hardware**. Built-in
+> controller settings are researched starting points, not guarantees — see
+> [docs/PROFILES.md](docs/PROFILES.md). Prove out any new setup with the
+> chuck empty and feed override low.
 
 ## Features
 
-- **Drip feeding with real flow control** — XON/XOFF, RTS/CTS, or both.
-  Blocks are  handed to the UART  one at a  time, so a machine  that says
-  "stop" really stops the stream at the next line.
-
-- **Machine profiles**  for common  controls (Fanuc, Haas,  Mazak, Okuma,
-  Siemens,  grbl)  plus   your  own,  via  config   files  —  `dripfeed
-  --list-profiles`.
-
-- **Dry-run  / demo  mode**  (`-n`)  — validates  the  file and  prints
-  exactly what  would be  sent, with timing  estimate, without  opening a
-  serial port.
-
-- **Pre-flight validation**  — the whole  file is checked  *before* the
-  first  byte  is  sent:  non-ASCII  characters,  unterminated  comments,
-  over-long blocks.
-
-- **Optional per-line acknowledge** — wait  for a byte (`char:3e`) or a
-  grbl-style `ok`; stop on `error`/`ALARM`.
-
-- **Pause  /  resume /  abort**  from  the  keyboard, signals,  or  (hook
-  provided) GPIO  buttons and interlocks;  **resume from any  line** with
-  `--start-line`.
-
+- **Drip feeding with real flow control** — XON/XOFF, RTS/CTS, or both. Blocks
+  are handed to the UART one at a time, so a machine that says "stop" really
+  stops the stream at the next line.
+- **Machine profiles** for common controls (Fanuc, Haas, Mazak, Okuma,
+  Siemens, grbl) plus your own, via config files — `dripfeed --list-profiles`.
+- **Dry-run / demo mode** (`-n`) — validates the file and prints exactly what
+  would be sent, with timing estimate, without opening a serial port.
+- **Fanuc Macro B safe** — `#` variables, `IF/GOTO`, `WHILE`, `G65`/`M98` etc. are
+  sent verbatim; an advisory scan warns about constructs that may not run when
+  streamed (backward `GOTO`, loops, calls to stored programs). See
+  [USAGE.md](USAGE.md#12-fanuc-macro-b-programs-star-swiss-30i31i32i-16i18i).
+- **Pre-flight validation** — the whole file is checked *before* the first byte
+  is sent: non-ASCII characters, unterminated comments, over-long blocks.
+- **Optional per-line acknowledge** — wait for a byte (`char:3e`) or a grbl-style
+  `ok`; stop on `error`/`ALARM`.
+- **Pause / resume / abort** from the keyboard, signals, or (hook provided)
+  GPIO buttons and interlocks; **resume from any line** with `--start-line`.
 - Clean, commented, multi-file C11; no libraries beyond POSIX.
 
 ## Build and install
@@ -57,16 +50,15 @@ normally needs your user in the `dialout` group.
 ## Quick start
 
 ```sh
-dripfeed --list-profiles                    # what machines are built in?
-dripfeed -n -p haas part.nc                 # rehearse: nothing is sent
-dripfeed -p haas -d /dev/ttyUSB0 part.nc    # do it for real
+dripfeed --list-profiles                     # what machines are built in?
+dripfeed -n -p haas part.nc                  # rehearse: nothing is sent
+dripfeed -p haas -d /dev/ttyUSB0 part.nc     # do it for real
 ```
 
-While  running: **`p`**/space  pauses or  resumes, **`q`**  aborts. If  a
-transfer stops, dripfeed prints the exact `--start-line` to resume from.
+While running: **`p`**/space pauses or resumes, **`q`** aborts. If a transfer
+stops, dripfeed prints the exact `--start-line` to resume from.
 
-See   **[USAGE.md](USAGE.md)**  for   walkthroughs,   config  files   and
-scripting.
+See **[USAGE.md](USAGE.md)** for walkthroughs, config files and scripting.
 
 ## Documentation
 
@@ -88,12 +80,12 @@ bin/    built binary         Makefile, README.md, USAGE.md
 
 ## Safety
 
-Drip feeding runs a machine from  a program it hasn't fully seen. Pausing
-the feeder only  stops *new* lines; the control  keeps executing whatever
-is already  in its buffer. **dripfeed  is not a safety  device** — keep
-the machine's own  feed hold and e-stop within reach,  and never use this
-tool's pause/abort as an emergency stop.
+Drip feeding runs a machine from a program it hasn't fully seen. Pausing the
+feeder only stops *new* lines; the control keeps executing whatever is already
+in its buffer. **dripfeed is not a safety device** — keep the machine's own
+feed hold and e-stop within reach, and never use this tool's pause/abort as an
+emergency stop.
 
 ## License
 
-BSD 3-Clause License, see `LICENSE` in project root.
+Not yet chosen — add a `LICENSE` file before publishing.

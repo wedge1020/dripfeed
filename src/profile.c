@@ -54,6 +54,15 @@ static const builtin_t BUILTINS[] = {
     { "fanuc-0m",      "Fanuc 0-M/T, 0-C/D (2400 7E2, RTS/CTS, LF)",        2400, 7, 'E', 2, FLOW_RTSCTS,  EOL_LF,   1, 1,  0, ACK_NONE, 0 },
     { "fanuc-10-15",   "Fanuc 10/11/12/15 (4800 7E2, RTS/CTS, LF)",         4800, 7, 'E', 2, FLOW_RTSCTS,  EOL_LF,   1, 1,  0, ACK_NONE, 0 },
 
+    /* Fanuc 16i/18i and 30i/31i/32i (e.g. Star Swiss-type lathes). These two
+     * are EXTRAPOLATED from the 0i and 18-M guides - no model-specific source
+     * was found - so treat as low confidence. 7E2 is the safe superset:
+     * a receiver set to 1 stop bit tolerates the extra idle bit. XON/XOFF
+     * (3-wire) is the most common cabling on these controls. Macro B text is
+     * passed through untouched; comment stripping stays OFF (messages!). */
+    { "fanuc-16i",     "Fanuc 16i/18i (9600 7E2, XON/XOFF, LF) - low confidence", 9600, 7, 'E', 2, FLOW_XONXOFF, EOL_LF,   1, 1,  0, ACK_NONE, 0 },
+    { "fanuc-30i",     "Fanuc 30i/31i/32i, Star Swiss (9600 7E2, XON/XOFF, LF) - low confidence", 9600, 7, 'E', 2, FLOW_XONXOFF, EOL_LF, 1, 1, 0, ACK_NONE, 0 },
+
     /* Haas: Settings 11 (baud) 12 (parity) 13 (stop bits) 14 (sync)
      * 37 (data bits) on the control. Values below are the commonly
      * documented 9600 8N1 XON/XOFF; Haas output block end is CR LF. */
@@ -89,6 +98,7 @@ void profile_defaults(profile_t *p)
     p->eol = EOL_CRLF;
     p->ack = ACK_NONE; p->ack_char = -1; p->ack_timeout_ms = 30000;
     p->strip_blank = 1;     /* blank lines carry no information; save buffer */
+    p->macro_check = 1;     /* advisory only; silent unless macros are present */
 }
 
 void profile_registry_init(void)
@@ -274,6 +284,7 @@ int profile_set_field(profile_t *p, const char *key, const char *value,
     BOOL(percent_frame,  "percent_frame")
     BOOL(strip_comments, "strip_comments")
     BOOL(strip_blank,    "strip_blank")
+    BOOL(macro_check,    "macro_check")
     BOOL(uppercase,      "uppercase")
 #undef BOOL
 
@@ -343,6 +354,7 @@ void profile_print(FILE *out, const profile_t *p)
     fprintf(out, "  %% framing     %s\n", p->percent_frame  ? "yes" : "no");
     fprintf(out, "  strip comments%s\n", p->strip_comments ? " yes" : " no");
     fprintf(out, "  strip blank   %s\n", p->strip_blank    ? "yes" : "no");
+    fprintf(out, "  macro check   %s\n", p->macro_check    ? "yes" : "no");
     fprintf(out, "  upper case    %s\n", p->uppercase      ? "yes" : "no");
     fprintf(out, "  max line len  %d%s\n", p->max_line_len, p->max_line_len ? "" : " (unlimited)");
     fprintf(out, "  line delay    %ld ms\n", p->line_delay_ms);

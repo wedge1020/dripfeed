@@ -57,6 +57,8 @@ typedef struct {
     int         strip_blank;     /* don't send empty lines                   */
     int         uppercase;       /* force upper case                         */
     int         max_line_len;    /* longest block allowed, 0 = unlimited     */
+    int         macro_check;     /* warn about Macro B constructs that may
+                                    not work when drip-fed (never blocks)    */
 
     /* pacing / handshaking */
     long        line_delay_ms;   /* pause after each line                    */

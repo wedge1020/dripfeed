@@ -93,6 +93,37 @@ check("dry-run -v shows skip reasons", "skipped (comment only)" in r.stderr and 
 r = run(["-n", "-p", "generic", "-s", "4", prog])
 check("--start-line skips earlier lines", "G1 X-1.0" in r.stdout.upper() and "G0" not in r.stdout.upper().replace("G1","") , r.stdout)
 
+# ---- Fanuc Macro B: verbatim pass-through + advisory warnings ----------------
+MB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "macro_b.nc")
+r = run(["-n", "-p", "fanuc-30i", MB])
+check("macro B: dry-run succeeds (warnings never block)", r.returncode == 0, r.stderr)
+for blk in ('"N10 #100=#100+1"', '"IF [#100 LT 5] GOTO 10"', '"WHILE [#101 LT 3] DO1"',
+            '"END1"', '"N15G65P9001A1.5B#100"', '"#3006=1 (CHECK TOOL)"', '"/1 G0 X1."',
+            '"$1 G0 Z[#100*2]"', '"!2 M3 S1000"', '"DPRNT[X#100[53]]"', '"GOTO #102"'):
+    check("macro B verbatim: " + blk, blk in r.stdout, r.stdout)
+check("macro B: file's own % not doubled", r.stdout.count('"%"') == 2 and "(added)" not in r.stdout, r.stdout)
+check("macro B: summary line", "use variables/branches/calls" in r.stderr, r.stderr)
+check("macro B warn: backward GOTO", "jumps BACK to line 4" in r.stderr, r.stderr)
+check("macro B warn: missing target", "no block N77" in r.stderr, r.stderr)
+check("macro B warn: computed GOTO", "computed GOTO" in r.stderr, r.stderr)
+check("macro B warn: WHILE", "WHILE loop" in r.stderr, r.stderr)
+check("macro B warn: calls (incl. packed N15G65P9001)", "G65 P9001" in r.stderr and "M98 P1234" in r.stderr, r.stderr)
+check("macro B warn: second O program", "2 program number(s)" in r.stderr, r.stderr)
+r = run(["-n", "-p", "fanuc-30i", "--no-macro-check", MB])
+check("--no-macro-check silences advisories", "warning" not in r.stderr and "macro B" not in r.stderr, r.stderr)
+r = run(["-n", "-p", "fanuc-30i", "--strip-comments", MB])
+check("macro B warn: stripping would drop #3006 text", "#3006 / MSG" in r.stderr, r.stderr)
+
+mb_small = write_tmp("""\
+    if [#1 eq 0] goto 10
+    #500=#500+1.5
+    N10 g65 p9001 a#1
+    """)
+m = Machine()
+rc, out, err = m.run(["-p", "fanuc-30i", "-f", "none", mb_small])
+check("macro B on the wire: exact bytes (upper-cased, otherwise untouched)",
+      m.rx == b"%\nIF [#1 EQ 0] GOTO 10\n#500=#500+1.5\nN10 G65 P9001 A#1\n%\n", repr(m.rx))
+
 # ---- pre-flight problems --------------------------------------------------
 bad = write_tmp("G1 X1\nG0 X1 (unterminated\nM30\n")
 r = run(["-n", "--strip-comments", bad]);  check("unterminated comment refused", r.returncode == 1 and "unterminated" in r.stderr, r.stderr)

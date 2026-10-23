@@ -15,6 +15,8 @@ Show any profile with `dripfeed -p NAME --show-profile`.
 | `fanuc-0i` | 9600 | 7E2 | RTS/CTS | LF | yes | medium |
 | `fanuc-0m` | 2400 | 7E2 | RTS/CTS | LF | yes | medium |
 | `fanuc-10-15` | 4800 | 7E2 | RTS/CTS | LF | yes | medium |
+| `fanuc-16i` | 9600 | 7E2 | XON/XOFF | LF | yes | **low** |
+| `fanuc-30i` | 9600 | 7E2 | XON/XOFF | LF | yes | **low** |
 | `haas` | 9600 | 8N1 | XON/XOFF | CRLF | yes | medium |
 | `mazak-m32` | 4800 | 7E2 | RTS/CTS | CRLF | yes | medium |
 | `mazak-t32` | 4800 | 7E2 | both | CRLF | no | medium |
@@ -43,6 +45,26 @@ generally expect it); the others don't.
 - Put the control in **TAPE/RMT (remote)** mode for drip feed (older models).
 - Comment stripping is **off**: `;` is the end-of-block character on Fanuc.
 
+### Fanuc 16i/18i and 30i/31i/32i (Star Swiss-type lathes) — *low confidence*
+- `fanuc-16i` and `fanuc-30i` are **extrapolated** from the 0i guide and a
+  separate 18-M drip-feed article (9600 baud, 7 data bits, even parity,
+  XON/XOFF, three-wire cabling). No model-specific source for 16i/18i or
+  30i/31i/32i was found, so check every value against the control's I/O
+  channel parameters (and the machine builder's parameter sheet — Star
+  controls are OEM-configured and may lock the baud rate).
+- 7E2 is used as the safe superset: a receiver set for 1 stop bit tolerates the
+  extra idle bit. XON/XOFF is the usual cabling; use `-f rtscts` if yours is
+  wired for it.
+- These controls usually also offer a memory card, USB or Ethernet/Data Server.
+  For very long programs those are often more robust than RS-232 drip feed.
+- **Macro B** is passed through untouched; see
+  [Fanuc Macro B](#fanuc-macro-b-and-drip-feed) below.
+- Programs for multi-path Swiss controls may contain path-selection or
+  synchronisation words (e.g. `$1`, `!2`). They are plain printable ASCII and
+  are sent verbatim, but dripfeed does not understand or validate them.
+- A 18-M article also advises against USB-RS232 adapters for continuous drip
+  feed because of added latency; see [WIRING.md](WIRING.md).
+
 ### Haas
 - Control settings: **11** baud, **12** parity, **13** stop bits,
   **14** synchronisation, **37** data bits. Commonly documented values:
@@ -54,6 +76,22 @@ generally expect it); the others don't.
 - Note: one web article reviewed while compiling this listed different
   setting numbers (86–91); those did not match the Haas manual numbering above
   or a second independent source, so they were not used.
+
+### Fanuc Macro B and drip feed
+dripfeed never edits Macro B syntax: `#` variables, `[ ]` expressions,
+`IF [..] GOTO n`, `WHILE [..] DOn / ENDn`, `G65`/`M98` calls, `DPRNT[..]`,
+`/` block-skip and `N` labels are all printable ASCII and are sent exactly as
+written (apart from the optional upper-casing). The Fanuc profiles keep comment
+stripping **off**, so `#3006=1 (MESSAGE)` and `(MSG, ...)` keep their text.
+
+What a control will *execute* from a stream is a separate question, and the
+documentation found while building this was thin. Reports from users (e.g. a
+[Mastercam forum thread](https://www.emastercam.com/forums/topic/73928-goto-commands-in-dnc-programs/))
+say a backward `GOTO` can't work because the control no longer has the earlier
+blocks, and that forward jumps depend on buffering; workarounds include
+putting logic in programs stored in control memory and calling them. None of
+that is confirmed by Fanuc documentation here, so dripfeed only **warns**
+(never blocks) — see `--macro-check` and USAGE.md.
 
 ### Mazak
 - Two profiles cover the most-documented families. The T-series entry sends no

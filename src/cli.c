@@ -19,7 +19,8 @@ enum {
     OPT_STRIP_COMMENTS, OPT_NO_STRIP_COMMENTS,
     OPT_STRIP_BLANK,    OPT_NO_STRIP_BLANK,
     OPT_PERCENT,        OPT_NO_PERCENT,
-    OPT_UPPER,          OPT_NO_UPPER
+    OPT_UPPER,          OPT_NO_UPPER,
+    OPT_MACRO_CHECK,    OPT_NO_MACRO_CHECK
 };
 
 static const struct option LONG_OPTS[] = {
@@ -41,6 +42,8 @@ static const struct option LONG_OPTS[] = {
     { "no-strip-blank",    no_argument,       0, OPT_NO_STRIP_BLANK },
     { "percent",           no_argument,       0, OPT_PERCENT },
     { "no-percent",        no_argument,       0, OPT_NO_PERCENT },
+    { "macro-check",       no_argument,       0, OPT_MACRO_CHECK },
+    { "no-macro-check",    no_argument,       0, OPT_NO_MACRO_CHECK },
     { "upper",             no_argument,       0, OPT_UPPER },
     { "no-upper",          no_argument,       0, OPT_NO_UPPER },
     { "line-delay",        required_argument, 0, 'l' },
@@ -112,6 +115,8 @@ int cli_parse(int argc, char **argv, cli_opts_t *o)
         case OPT_NO_STRIP_BLANK:    rc = add_override(o, "strip_blank", "no");  break;
         case OPT_PERCENT:           rc = add_override(o, "percent_frame", "yes"); break;
         case OPT_NO_PERCENT:        rc = add_override(o, "percent_frame", "no");  break;
+        case OPT_MACRO_CHECK:       rc = add_override(o, "macro_check", "yes"); break;
+        case OPT_NO_MACRO_CHECK:    rc = add_override(o, "macro_check", "no");  break;
         case OPT_UPPER:             rc = add_override(o, "uppercase", "yes"); break;
         case OPT_NO_UPPER:          rc = add_override(o, "uppercase", "no");  break;
 
@@ -155,6 +160,8 @@ void cli_usage(FILE *out)
 "      --[no-]strip-comments   remove (..) and ;.. comments\n"
 "      --[no-]strip-blank  skip blank lines\n"
 "      --[no-]upper        force upper case\n"
+"      --[no-]macro-check  warn about Fanuc Macro B constructs that may not\n"
+"                          work when drip-fed (backward GOTO, WHILE, G65/M98 calls)\n"
 "      --max-line N        refuse blocks longer than N characters (0 = no limit)\n"
 "  -l, --line-delay MS     pause after each line\n"
 "  -t, --char-delay US     pause after each character (very slow controls)\n"
