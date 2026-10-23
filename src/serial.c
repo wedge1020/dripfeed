@@ -2,7 +2,8 @@
  * serial.c - POSIX termios serial port handling (see serial.h).
  */
 #define _POSIX_C_SOURCE 200809L
-#define _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE        /* glibc: cfmakeraw, CRTSCTS, B57600+ ...       */
+#define _DARWIN_C_SOURCE       /* macOS: same extensions, hidden by strict -std */
 
 #include <errno.h>
 #include <fcntl.h>
