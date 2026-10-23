@@ -1,0 +1,73 @@
+# dripfeed.conf - example configuration
+#
+# Install (any one, later files override earlier ones):
+#   /etc/dripfeed.conf
+#   ~/.config/dripfeed/dripfeed.conf
+#   or pass any file explicitly:  dripfeed -C ./my.conf part.nc
+#
+# Lines starting with # or ; are comments. Values may be "quoted".
+# Command-line options always win over anything here.
+
+# ---------------------------------------------------------------------------
+# Global defaults (optional)
+# ---------------------------------------------------------------------------
+[dripfeed]
+device  = /dev/serial0        # serial port to use if -d is not given
+profile = shop-lathe          # profile to use if -p is not given
+
+# ---------------------------------------------------------------------------
+# A profile: any section other than [dripfeed]. The section name is the
+# profile name (letters, digits, . _ -). A profile with the same name as a
+# built-in replaces it.
+#
+# 'base' copies an existing profile; it must be the FIRST key in the section.
+# Without 'base', unspecified keys take neutral defaults (9600 8N1 XON/XOFF,
+# CRLF, strip blank lines).
+# ---------------------------------------------------------------------------
+[shop-lathe]
+base        = fanuc-0i
+description = Shop lathe - Fanuc 0i-TD, 4800 baud
+
+# --- serial line ---
+baud        = 4800            # 110 300 600 1200 2400 4800 9600 19200 38400
+                              # 57600 115200 230400
+databits    = 7               # 5-8 (7 or 8 in practice)
+parity      = E               # N, E or O
+stopbits    = 2               # 1 or 2
+flow        = rtscts          # none | xonxoff | rtscts | both
+
+# --- G-code formatting ---
+eol            = lf           # crlf | lf | cr   (sent after every block)
+percent_frame  = yes          # add '%' lines at start/end if the file lacks them
+strip_comments = no           # remove (..) and ;.. comments
+strip_blank    = yes          # don't send empty lines
+uppercase      = yes          # force upper case
+max_line_len   = 0            # refuse blocks longer than this; 0 = no limit
+
+# --- pacing and handshaking ---
+line_delay_ms  = 0            # pause after every line
+char_delay_us  = 0            # pause after every character (very slow controls)
+ack            = none         # none | ok | char:HEX   (e.g. char:06 or char:3e)
+ack_timeout_ms = 30000        # give up waiting for an acknowledge after this
+
+# ---------------------------------------------------------------------------
+# Another example: a grbl-style controller on USB, tweaked
+# ---------------------------------------------------------------------------
+[bench-router]
+base           = grbl
+description    = Bench router (grbl 1.1)
+ack_timeout_ms = 300000       # long moves can delay 'ok' while the planner is full
+
+# ---------------------------------------------------------------------------
+# From scratch (no base): an old control that answers each block with '>'
+# ---------------------------------------------------------------------------
+[old-mill]
+description = Old mill with prompt handshake
+baud        = 2400
+databits    = 7
+parity      = E
+stopbits    = 2
+flow        = none
+eol         = cr
+ack         = char:3e
+percent_frame = yes
